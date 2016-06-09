@@ -1,0 +1,31 @@
+
+#footerlicense {
+  position: absolute;
+  bottom: 0px;
+  padding: 5px;
+  font-size: small;
+  text-align: justify;
+}
+
+  .label-alpha {
+  background-color: #d53880;
+  border-radius: 0px;
+}
+
+
+
+/*Lightbox d3 css */
+
+.axis path,
+.axis line {
+  fill: none;
+  stroke: #000;
+  shape-rendering: crispEdges;
+}
+
+
+.line {
+  fill: none;
+  stroke: steelblue;
+  stroke-width: 3px;
+}

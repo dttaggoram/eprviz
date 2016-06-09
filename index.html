@@ -1,0 +1,386 @@
+
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <!-- The above 3 meta tags *must* come first in the head; any other head content must come *after* these tags -->
+    <meta name="description" content="">
+    <meta name="author" content="">
+    <link rel="icon" href="../../favicon.ico">
+
+    <title>EPR Data Visualisation</title>
+
+    <!-- Bootstrap core CSS -->
+    <link href="css/bootstrap.min.css" rel="stylesheet">
+
+    <!-- D3  CSS -->
+    <link href="css/d3.css" rel="stylesheet">
+
+    <!-- IE10 viewport hack for Surface/desktop Windows 8 bug -->
+    <link href="css/ie10-viewport-bug-workaround.css" rel="stylesheet">
+
+    <!-- Custom styles for this template -->
+    <link href="css/dashboard.css" rel="stylesheet">
+
+
+    <!-- HTML5 shim and Respond.js for IE8 support of HTML5 elements and media queries -->
+    <!--[if lt IE 9]>
+      <script src="https://oss.maxcdn.com/html5shiv/3.7.2/html5shiv.min.js"></script>
+      <script src="https://oss.maxcdn.com/respond/1.4.2/respond.min.js"></script>
+    <![endif]-->
+
+  </head>
+
+  <body>
+    <nav id="navbar" class="navbar navbar-inverse navbar-fixed-top">
+      <div class="container-fluid">
+        <div class="navbar-header">
+          <button type="button" class="navbar-toggle collapsed" data-toggle="collapse" data-target="#navbar" aria-expanded="false" aria-controls="navbar">
+            <span class="sr-only">Toggle navigation</span>
+            <span class="icon-bar"></span>
+            <span class="icon-bar"></span>
+            <span class="icon-bar"></span>
+          </button>
+          <span class="label label-alpha">ALPHA</span>
+          <a class="navbar-brand" href="#">EPR Data Visualisation</a>
+
+        </div>
+        <div id="navbar" class="navbar-collapse collapse">
+          <ul class="nav navbar-nav navbar-right">
+            <li><a href="#"></a></li>
+          </ul>
+        </div>
+      </div>
+    </nav>
+
+    <div class="container-fluid">
+        <div class="row">
+            <div class="col-sm-3 col-md-2 sidebar">
+            <h2>Filter</h2>
+            	<h3>Individuals</h3>
+            	<select id='names'>
+					<option value=''>Pick a name</option>
+				</select>
+				<hr />
+				<h3>Departments</h3>
+				<fieldset id='depts'>
+				</fieldset>
+				<hr />
+				<h3>Regions</h3>
+				<fieldset id='regions'>
+				</fieldset>
+                <div id="footerlicense">
+                    <p>David Tagg-Oram &copy;</p>
+                </div>
+            </div>
+            <div id="mainsection" class="col-sm-9 col-sm-offset-3 col-md-10 col-md-offset-2 main">
+              <div id='svg'></div>
+            </div>
+        </div>
+    </div>
+
+    
+
+    <!-- Bootstrap core JavaScript
+    ================================================== -->
+    <!-- Placed at the end of the document so the pages load faster -->
+    <script src="js/jquery.min.js"></script>
+    <script src="js/bootstrap.min.js"></script>
+    <!-- IE10 viewport hack for Surface/desktop Windows 8 bug -->
+    <script src="js/ie10-viewport-bug-workaround.js"></script>
+    
+<!-- <script src="https://d3js.org/d3.v3.min.js" charset="utf-8"></script> -->
+<script src="d3.v3.min.js" charset="utf-8"></script>
+<script>
+
+var margin = {top: 20, right: 80, bottom: 50, left: 50},
+    width = $("#mainsection").innerWidth()-100 - margin.left - margin.right,
+    height = $(".sidebar").innerHeight()- 200 - margin.top - margin.bottom;
+
+var svg = d3.select("#svg").append("svg")
+    .attr("width", width + margin.left + margin.right)
+    .attr("height", height + margin.top + margin.bottom)
+  .append("g")
+    .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
+
+var x0 = d3.scale.ordinal()
+    .rangeRoundBands([0, width], .1);
+
+var x1 = d3.scale.ordinal();
+
+var y = d3.scale.linear()
+    .range([height, 0]);
+
+var color = d3.scale.ordinal()
+    .range(["#98abc5", "#8a89a6", "#7b6888", "#6b486b", "#a05d56", "#d0743c", "#ff8c00"]);
+
+var xAxis = d3.svg.axis()
+    .scale(x0)
+    .orient("bottom");
+
+var yAxis = d3.svg.axis()
+    .scale(y)
+    .orient("left");
+
+d3.xhr('newdata2.csv').get(function (err, response) {
+  var dirtyCSV = response.responseText;
+  var cleanCSV = dirtyCSV.split('\n').slice(1);
+
+  var rega = new RegExp('"', 'g');
+  var regn = new RegExp('n, ', 'g');
+  var regs = new RegExp('s, ', 'g');
+  var rege = new RegExp('e, ', 'g');
+  var header = cleanCSV[0].replace(rega,'').replace(regn,'n ').replace(regs,'s ').replace(rege,'e ').split(",");
+
+for (i = 0; i < header.length; i++) {
+	//header[i] = header[i].substr(0,6);
+	if(header[i] == "Actual Skill exposure") {
+    	header[i] = header[i-1]+"-"+header[i];
+    }
+    if(header[i] == "Actual Skill Level") {
+    	header[i] = header[i-2]+"-"+header[i];
+    }
+    if(header[i] == "Actual Skill use") {
+    	header[i] = header[i-3]+"-"+header[i];
+    }
+    if(header[i] == "Evidence of competency") {
+    	header[i] = header[i-1]+"-"+header[i];
+    }
+    if(header[i] == "areas to work on and develop in the future") {
+    	header[i] = header[i-2]+"-"+header[i];
+    }
+    if(header[i] == "comment by cohort leader") {
+    	header[i] = header[i-3]+"-"+header[i];
+    }
+    if(header[i] == "Not Met") {
+    	header[i] = header[i-1]+"-"+header[i];
+    }
+    if(header[i] == "Partially Met") {
+    	header[i] = header[i-2]+"-"+header[i];
+    }
+    if(header[i] == "Substantially Met") {
+    	header[i] = header[i-3]+"-"+header[i];
+    }
+    if(header[i] == "Fully Met") {
+    	header[i] = header[i-4]+"-"+header[i];
+    }
+
+}
+mainheaders = dirtyCSV.split('\n').slice(0)[0].split(','); 
+
+
+var title;
+
+for (i = 0; i < header.length; i++) {
+	if(mainheaders[i].length > 1) {
+		title = mainheaders[i];
+	}
+	header[i] = title+"-"+header[i];
+
+}
+
+cleanCSV[0] = header.join(',');
+cleanCSV = cleanCSV.join('\n');
+var parsedCSV = d3.csv.parse(cleanCSV);
+
+categories = [];
+
+mainheaders.forEach(function(d){
+	if(d.length > 1 && d != "Competencies" && d != "Posting Details"  && d != "Performance Marking") {
+		categories.push(d);
+	}
+})
+
+function parser(d){
+	if(d=="N") {
+		d=0;
+	}
+	if(d=="C") {
+		d=0;
+	}
+	return parseFloat(d);
+}
+
+parsedCSV.forEach(function(d){
+
+	for (i=0; i < categories.length; i++) {
+		d[categories[i]+"-exp"] = 0;
+		d[categories[i]+"-level"] = 0;
+		d[categories[i]+"-total"] = 0;
+		
+		for (x in d3.keys(d)){
+			if (d3.keys(d)[x].substr(0,categories[i].length) == categories[i] && d3.keys(d)[x].substr(-8) == "exposure") {
+				d[categories[i]+"-exp"] += parser(d3.values(d)[x].substr(0,1));
+				d[categories[i]+"-total"]++;
+			}
+			if (d3.keys(d)[x].substr(0,categories[i].length) == categories[i] && d3.keys(d)[x].substr(-5) == "Level") {
+				d[categories[i]+"-level"] += parser(d3.values(d)[x].substr(0,1));
+			}
+		}
+		d[categories[i]+"-exp"] = d[categories[i]+"-exp"]/d[categories[i]+"-total"];
+		d[categories[i]+"-level"] = d[categories[i]+"-level"]/d[categories[i]+"-total"];		
+	}
+
+	d['all']=0;
+
+});
+
+
+var data = d3.nest()
+.rollup(function(leaves) {
+	array = [];
+	for (i=0; i<categories.length; i++) {
+		array.push( [d3.median(leaves, function(d) { return d[categories[i]+"-exp"];} ),d3.median(leaves, function(d) { return d[categories[i]+"-level"];} ) ])
+	}
+		return { array }
+})
+.entries(parsedCSV);
+
+data = data.array;
+
+var names = d3.nest()
+.key(function(d) { return d['Posting Details-Name']}).sortKeys(d3.ascending)
+.rollup(function(leaves) { return leaves.length; })
+.entries(parsedCSV);
+
+var regions = d3.nest()
+.key(function(d) { return d['Posting Details-Region']}).sortKeys(d3.ascending)
+.rollup(function(leaves) { return leaves.length; })
+.entries(parsedCSV);
+
+var depts = d3.nest()
+.key(function(d) { return d['Posting Details-Dept']}).sortKeys(d3.ascending)
+.rollup(function(leaves) { return leaves.length; })
+.entries(parsedCSV);
+
+var namesoptions = d3.select("#names");
+
+namesoptions.selectAll(".option")
+.append("option")
+.data(names)
+.enter()
+.append("option")
+.attr("value", function(d) {return d.key;})
+.text(function(d) {
+return d.key; });
+
+var deptsoptions = d3.select("#depts");
+
+deptsoptions.selectAll(".depts")
+.append("input")
+.data(depts)
+.enter()
+.append('label')
+.attr('for',function(d){ return d.key; })
+.text(function(d) { return d.key; })
+.append("input", function(d) {return d.key;})
+.attr("type","checkbox")
+.attr("name","depts")
+.attr("checked","true")
+.attr("value",function(d) {
+return d.key; });
+
+var regionsoptions = d3.select("#regions");
+
+regionsoptions.selectAll(".regions")
+.append("input")
+.data(regions)
+.enter()
+.append('label')
+.attr('for',function(d){ return d.key; })
+.text(function(d) { return d.key; })
+.append("input", function(d) {return d.key;})
+.attr("type","checkbox")
+.attr("name","regions")
+.attr("checked","true")
+.attr("value",function(d) {
+return d.key; });
+
+bands = ["Exposure","Level"];
+
+  x0.domain(categories.map(function(d) { return d; }));
+  x1.domain(bands).rangeRoundBands([0, x0.rangeBand()]);
+  y.domain([0, 4]);
+
+  svg.append("g")
+      .attr("class", "x axis")
+      .attr("transform", "translate(0," + height + ")")
+      .call(xAxis)
+      .selectAll(".tick text")
+      .call(wrap, x0.rangeBand());
+
+  svg.append("g")
+      .attr("class", "y axis")
+      .call(yAxis)
+    .append("text")
+      .attr("transform", "rotate(-90)")
+      .attr("y", 6)
+      .attr("dy", ".71em")
+      .style("text-anchor", "end")
+      .text("Attained");
+
+  var skill = svg.selectAll(".skill")
+      .data(data)
+    .enter().append("g")
+      .attr("class", "skill")
+      .attr("transform", function(d,i) { return "translate(" + x0(categories[i]) + ",0)";});
+
+  skill.selectAll("rect")
+      .data(function(d) { return d; })
+    .enter().append("rect")
+      .attr("width", x1.rangeBand())
+      .attr("x", function(d,i) { console.log(d); return x1(bands[i]); })
+      .attr("y", function(d,i) { return y(d); })
+      .attr("height", function(d,i) { return height - y(d); })
+      .style("fill", function(d,i) { return color(i); });
+
+  var legend = svg.selectAll(".legend")
+      .data(bands)
+    .enter().append("g")
+      .attr("class", "legend")
+      .attr("transform", function(d, i) { return "translate(0," + i * 22 + ")"; });
+
+  legend.append("rect")
+      .attr("x", width - 18)
+      .attr("width", 18)
+      .attr("height", 18)
+      .style("fill", function(d, i) {return color(i)});
+
+  legend.append("text")
+      .attr("x", width - 24)
+      .attr("y", 9)
+      .attr("dy", ".35em")
+      .style("text-anchor", "end")
+      .text(function(d) { return d; });
+
+
+function wrap(text, width) {
+  text.each(function() {
+    var text = d3.select(this),
+        words = text.text().split(/\s+/).reverse(),
+        word,
+        line = [],
+        lineNumber = 0,
+        lineHeight = 1.1, // ems
+        y = text.attr("y"),
+        dy = parseFloat(text.attr("dy")),
+        tspan = text.text(null).append("tspan").attr("x", 0).attr("y", y).attr("dy", dy + "em");
+    while (word = words.pop()) {
+      line.push(word);
+      tspan.text(line.join(" "));
+      if (tspan.node().getComputedTextLength() > width) {
+        line.pop();
+        tspan.text(line.join(" "));
+        line = [word];
+        tspan = text.append("tspan").attr("x", 0).attr("y", y).attr("dy", ++lineNumber * lineHeight + dy + "em").text(word);
+      }
+    }
+  });
+}
+
+});
+
+
+</script>
