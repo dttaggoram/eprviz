@@ -1,3 +1,6 @@
+body {
+  padding-top: 50px;
+}
 
 #footerlicense {
   position: absolute;
@@ -12,6 +15,11 @@
   border-radius: 0px;
 }
 
+  .input {
+  background-color: #fff;
+  border-radius: 0px;
+  margin: 10px 10px 10px 10px;
+}
 
 
 /*Lightbox d3 css */
